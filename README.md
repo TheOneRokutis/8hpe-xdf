@@ -1,5 +1,7 @@
 # 8HP E-Series XDF (ZB 8646496)
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/Y2Z4287DXZ)
+
 TunerPro XDF definitions and patch entries for the ZF **8HP** transmission calibration used in **E-series native 8HP swaps** (E8x / E9x / E6x) - built around the E70 8HP calibration, **ZB 8646496**.
 
 ## What it does
