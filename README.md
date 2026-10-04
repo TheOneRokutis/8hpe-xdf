@@ -9,7 +9,7 @@ TunerPro XDF definitions and patch entries for the ZF **8HP** transmission calib
 - **True manual** - manual mode holds the gear to the limiter; no forced upshift.
 - A **`stage 3` folder** listing every map a stage-3-style tune touches, so you can see exactly what's involved and adjust those maps yourself.
 
-The definition set is not final - coverage, naming and documentation are still being worked on and will keep improving.
+The definition set is not final and could have mistakes - coverage, naming and documentation are still being worked on and will keep improving.
 
 ## Requirements
 
