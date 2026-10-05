@@ -179,6 +179,25 @@
     <XDFPATCHENTRY name="df31_gate_off" address="0x1D34B1" datasize="0x1" patchdata="00" />
     <XDFPATCHENTRY name="strat_state_attr_3_01" address="0x1C927C" datasize="0x64" patchdata="01010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101" />
   </XDFPATCH>
+  <XDFCONSTANT uniqueid="0x11B1" flags="0x0">
+    <title>Radumfang - dynamic wheel circumference (mm)</title>
+    <description>Dynamic wheel circumference in mm - the tyre's ROLLING circumference, not the geometric one.
+Formula: pi x (rim_inch x 25.4 + 2 x width_mm x profile_pct/100) x 0.97
+Worked example: 225/45R17 = 1933 mm.
+If the tyre maker publishes a rolling circumference (Abrollumfang), use that value directly.
+IMPORTANT: after flashing, reset the learned rear axle value (Tool32 job steuern_lernfkt_ruecksetzen, argument 0) and drive above ~24 km/h so it re-learns. Then read status_lernfkt: the learned value must equal your real diff ratio; if it is one step off (e.g. 3.91 instead of 3.73), multiply your entry by (real ratio / learned value) and repeat.
+Note: the TCU only accepts the closest value from its fixed ratio list (2.00 2.35 2.47 2.56 2.65 2.81 2.93 3.08 3.15 3.23 3.38 3.46 3.64 3.73 3.91 4.10 4.27), so the entry only needs to be within about -1 %/+2.5 % of the reference.
+Do not use this to correct the speedometer - that is the DSC's coding.</description>
+    <CATEGORYMEM index="0" category="1" />
+    <EMBEDDEDDATA mmedtypeflags="0x00" mmedaddress="0x195F10" mmedelementsizebits="16" mmedmajorstridebits="0" mmedminorstridebits="0" />
+    <decimalpl>0</decimalpl>
+    <datatype>0</datatype>
+    <unittype>0</unittype>
+    <DALINK index="0" />
+    <MATH equation="X">
+        <VAR id="X" />
+      </MATH>
+  </XDFCONSTANT>
   <XDFTABLE uniqueid="0x101" flags="0x0">
     <title>Upshift lines, char 00: 1&gt;2..5&gt;6</title>
     <description>@0x1d0ab6 (file +0x508b6). Output-shaft speed (rpm) at which the upshift is requested, over accelerator pedal (per mille, 1100 = kickdown). 8000 = shift disabled. Rows = pedal breakpoints (live axis @0x1cc1cc), columns = gear pairs. Each slot is 15 u16 (30 B); the up and down slots of one gear pair alternate (down = up + 30 B). Slot addresses @0x1d0ab6 + k*60; gear 1&gt;2..5&gt;6. Characteristic 00 of 23, selected from the strategy state. Geometry verified in the image (pointer tables 0x5A47C/0x5A984). Confidence HIGH for the layout, MED for which characteristic is which.</description>
