@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>8HP Radumfang Calculator</title>
+<meta name="description" content="Wheel circumference (Radumfang) calculator for 8HP transmission coding: convert a tyre size to the rolling-circumference value the TCU expects.">
+<style>
+  :root {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --ink: #14171c;
+    --ink-2: #4a525e;
+    --line: #ccd2da;
+    --accent: #0b4f9e;
+    --accent-ink: #ffffff;
+    --warn-bg: #fdf3e0;
+    --warn-line: #d9a53a;
+    --field: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14171c;
+      --panel: #1d2228;
+      --ink: #eef1f5;
+      --ink-2: #a4aebc;
+      --line: #333c47;
+      --accent: #5aa9f2;
+      --accent-ink: #0b1016;
+      --warn-bg: #2b2415;
+      --warn-line: #b08a34;
+      --field: #12161b;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 12px 16px 32px;
+    max-width: 720px;
+    margin-inline: auto;
+    overflow-wrap: break-word;
+  }
+  h1 { font-size: 1.25rem; margin: 8px 0 2px; letter-spacing: -0.01em; }
+  h2 {
+    font-size: 0.95rem; margin: 26px 0 8px;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2);
+    border-bottom: 1px solid var(--line); padding-bottom: 5px;
+  }
+  p { margin: 8px 0; }
+  .sub { color: var(--ink-2); font-size: 0.9rem; margin-top: 0; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    margin-top: 12px;
+  }
+  .grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+  @media (min-width: 520px) { .grid { grid-template-columns: 1fr 1fr 1fr; } }
+  label { display: block; font-size: 0.85rem; color: var(--ink-2); margin-bottom: 5px; }
+  input[type="number"], input[type="text"] {
+    width: 100%;
+    font: inherit;
+    font-size: 1.15rem;
+    font-variant-numeric: tabular-nums;
+    padding: 12px 12px;
+    min-height: 50px;
+    color: var(--ink);
+    background: var(--field);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+  .out {
+    margin-top: 14px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    border-radius: 10px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .out .big { font-size: 2.4rem; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .out .cap { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.85; }
+  .out .unit { font-size: 1.2rem; font-weight: 500; opacity: 0.9; }
+  .out.override { background: var(--warn-line); }
+  .deriv { font-size: 0.85rem; color: var(--ink-2); margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .deriv code { font-size: 0.95em; color: var(--ink); }
+  .warn {
+    background: var(--warn-bg);
+    border-left: 4px solid var(--warn-line);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    margin-top: 14px;
+  }
+  .note { font-size: 0.88rem; color: var(--ink-2); }
+  table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  caption { text-align: left; font-size: 0.85rem; color: var(--ink-2); padding-bottom: 6px; }
+  th, td { padding: 9px 6px; border-bottom: 1px solid var(--line); text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  thead th { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-2); font-weight: 600; }
+  tbody td:nth-child(2) { font-weight: 700; font-size: 1.05rem; }
+  tbody tr.hit { background: rgba(11, 79, 158, 0.12); }
+  @supports (background: color-mix(in srgb, red 10%, transparent)) {
+    tbody tr.hit { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  }
+  .ratios { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 10px 0 0; list-style: none; }
+  .ratios li {
+    font-variant-numeric: tabular-nums;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.85rem;
+    background: var(--panel);
+  }
+  .steps { margin: 8px 0 0; padding-left: 20px; }
+  .steps li { margin-bottom: 10px; }
+  .steps li:last-child { margin-bottom: 0; }
+  code, kbd {
+    background: var(--warn-bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    font-size: 0.9em;
+    word-break: break-word;
+  }
+  footer {
+    margin-top: 30px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    font-size: 0.8rem;
+    color: var(--ink-2);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>Radumfang / Wheel Circumference</h1>
+<p class="sub">Value to code into the 8HP TCU for the fitted rear tyre size.</p>
+
+<div class="panel">
+  <div class="grid">
+    <div>
+      <label for="rim">Rim diameter (inch)</label>
+      <input id="rim" type="number" inputmode="decimal" step="0.5" min="10" max="24" value="18">
+    </div>
+    <div>
+      <label for="width">Tyre width (mm)</label>
+      <input id="width" type="number" inputmode="decimal" step="5" min="100" max="400" value="225">
+    </div>
+    <div>
+      <label for="profile">Aspect / profile (%)</label>
+      <input id="profile" type="number" inputmode="decimal" step="5" min="20" max="90" value="40">
+    </div>
+  </div>
+
+  <div style="margin-top:12px">
+    <label for="maker">Maker's rolling circumference (mm) &mdash; optional, overrides calculation</label>
+    <input id="maker" type="number" inputmode="decimal" step="1" min="1000" max="4000" placeholder="e.g. 1941 from tyre datasheet">
+  </div>
+
+  <div class="out" id="outBox">
+    <div class="cap">Value to enter</div>
+    <div class="big"><span id="prog">1942</span> <span class="unit">mm</span></div>
+  </div>
+
+  <div class="deriv" id="deriv"></div>
+</div>
+
+<div class="warn">
+  Prefer the tyre maker's published rolling circumference (Abrollumfang) when it is given &mdash;
+  it already accounts for deflection under load. The <strong>0.97</strong> factor is the usual
+  geometric&nbsp;&rarr;&nbsp;rolling conversion and is an approximation.
+</div>
+
+<h2>Formula</h2>
+<div class="panel">
+  <p class="note" style="margin-top:0">
+    Geometric circumference = &pi; &times; (rim_inch &times; 25.4 + 2 &times; width &times; profile&nbsp;/&nbsp;100)
+  </p>
+  <p class="note">
+    Program value = geometric &times; 0.97, rounded to a whole mm.
+  </p>
+  <p class="note" style="margin-bottom:0">
+    A tyre's true rolling radius is smaller than its geometric one because the sidewall
+    deflects under load, so the rolling circumference is shorter than the geometric value.
+    0.97 is the conventional factor for that difference.
+  </p>
+</div>
+
+<h2>Common sizes</h2>
+<div class="panel">
+  <table>
+    <caption>Approximate program values, computed from the formula above.</caption>
+    <thead>
+      <tr><th scope="col">Size</th><th scope="col">Program value</th><th scope="col">Geometric</th></tr>
+    </thead>
+    <tbody>
+      <tr data-size="205/55R16"><td>205/55R16</td><td>1926</td><td>1985</td></tr>
+      <tr data-size="205/60R16"><td>205/60R16</td><td>1988</td><td>2050</td></tr>
+      <tr data-size="225/45R17"><td>225/45R17</td><td>1933</td><td>1993</td></tr>
+      <tr data-size="225/50R17"><td>225/50R17</td><td>2001</td><td>2063</td></tr>
+      <tr data-size="245/40R18"><td>245/40R18</td><td>1991</td><td>2052</td></tr>
+      <tr data-size="225/40R18"><td>225/40R18</td><td>1942</td><td>2002</td></tr>
+      <tr data-size="225/45R18"><td>225/45R18</td><td>2010</td><td>2073</td></tr>
+      <tr data-size="245/45R18"><td>245/45R18</td><td>2065</td><td>2129</td></tr>
+      <tr data-size="255/55R18"><td>255/55R18</td><td>2248</td><td>2318</td></tr>
+      <tr data-size="255/35R19"><td>255/35R19</td><td>2015</td><td>2077</td></tr>
+      <tr data-size="275/35R19"><td>275/35R19</td><td>2057</td><td>2121</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2>Accepted values</h2>
+<div class="panel">
+  <p class="note" style="margin-top:0">
+    The transmission does not store an arbitrary number. It picks the closest entry from its
+    fixed ratio list, so a value within roughly &minus;1&nbsp;% / +2.5&nbsp;% of the reference is enough.
+  </p>
+  <ul class="ratios">
+    <li>2.00</li><li>2.35</li><li>2.47</li><li>2.56</li><li>2.65</li><li>2.81</li>
+    <li>2.93</li><li>3.08</li><li>3.15</li><li>3.23</li><li>3.38</li><li>3.46</li>
+    <li>3.64</li><li>3.73</li><li>3.91</li><li>4.10</li><li>4.27</li>
+  </ul>
+</div>
+
+<h2>After you flash</h2>
+<div class="panel">
+  <ol class="steps">
+    <li>Flash the tune.</li>
+    <li>Run Tool32 job <code>steuern_lernfkt_ruecksetzen</code> with argument <code>0</code>.</li>
+    <li>Drive above roughly 24&nbsp;km/h for a minute or two so the adaptation can run.</li>
+    <li>Read out <code>status_lernfkt</code>. The learned rear-axle value must equal the car's real diff ratio.</li>
+    <li>
+      If it is one step off (for example it learned 3.91 instead of 3.73), multiply the value you
+      entered by <code>real ratio / learned value</code>, write the result, and repeat the
+      reset and drive cycle.
+    </li>
+  </ol>
+</div>
+
+<div class="warn">
+  This parameter is <strong>not</strong> for correcting the speedometer. Speedometer correction is
+  done in the ABS/DSC coding, not here.
+</div>
+
+<footer>
+  Part of the 8HPe XDF project. Work in progress.
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var elRim = document.getElementById("rim");
+  var elWidth = document.getElementById("width");
+  var elProfile = document.getElementById("profile");
+  var elMaker = document.getElementById("maker");
+  var elProg = document.getElementById("prog");
+  var elDeriv = document.getElementById("deriv");
+  var elOutBox = document.getElementById("outBox");
+
+  function num(el) {
+    var v = parseFloat(el.value);
+    return isFinite(v) ? v : NaN;
+  }
+
+  function render() {
+    var rim = num(elRim);
+    var width = num(elWidth);
+    var profile = num(elProfile);
+    var maker = num(elMaker);
+    var haveMaker = elMaker.value.trim() !== "" && isFinite(maker) && maker > 0;
+
+    var geom = NaN;
+    if (isFinite(rim) && isFinite(width) && isFinite(profile)) {
+      geom = Math.PI * (rim * 25.4 + 2 * width * profile / 100);
+    }
+
+    if (haveMaker) {
+      elProg.textContent = String(Math.round(maker));
+      elOutBox.className = "out override";
+      if (isFinite(geom)) {
+        var delta = (geom * 0.97) - maker;
+        elDeriv.innerHTML =
+          'Using the maker’s rolling circumference. Formula would give ' +
+          '<code>' + Math.round(geom * 0.97) + ' mm</code> ' +
+          '(geometric <code>' + geom.toFixed(1) + ' mm</code> × 0.97); ' +
+          'difference <code>' + (delta >= 0 ? "+" : "") + delta.toFixed(0) + ' mm</code>.';
+      } else {
+        elDeriv.innerHTML = "Using the maker’s rolling circumference. Enter a full tyre size to compare with the formula.";
+      }
+      return;
+    }
+
+    elOutBox.className = "out";
+
+    if (!isFinite(geom)) {
+      elProg.textContent = "—";
+      elDeriv.textContent = "Enter rim diameter, tyre width and aspect ratio.";
+      return;
+    }
+
+    elProg.textContent = String(Math.round(geom * 0.97));
+    elDeriv.innerHTML =
+      'Geometric circumference <code>' + geom.toFixed(1) + ' mm</code> × 0.97 = ' +
+      '<code>' + (geom * 0.97).toFixed(1) + ' mm</code>, rounded to ' +
+      '<code>' + Math.round(geom * 0.97) + ' mm</code>.';
+  }
+
+  function sizeFromInputs() {
+    var rim = num(elRim);
+    var width = num(elWidth);
+    var profile = num(elProfile);
+    if (!isFinite(rim) || !isFinite(width) || !isFinite(profile)) return "";
+    return String(width) + "/" + String(profile) + "R" + String(rim);
+  }
+
+  function highlightRow() {
+    var key = sizeFromInputs();
+    var rows = document.querySelectorAll("tbody tr");
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      if (key !== "" && row.getAttribute("data-size") === key) {
+        row.className = "hit";
+      } else {
+        row.className = "";
+      }
+    }
+  }
+
+  function update() {
+    render();
+    highlightRow();
+  }
+
+  var inputs = [elRim, elWidth, elProfile, elMaker];
+  for (var i = 0; i < inputs.length; i++) {
+    inputs[i].addEventListener("input", update);
+    inputs[i].addEventListener("change", update);
+  }
+
+  update();
+})();
+</script>
+
+</body>
+</html>
